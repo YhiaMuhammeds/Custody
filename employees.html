@@ -1,131 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8" />
-  <title>بيانات العاملين</title>
-  <link rel="stylesheet" href="style.css" />
-  <script type="module" src="employees.js"></script>
-</head>
-
-<body>
-  <header class="main-header">
-  <nav>
-    <ul>
-      <li><a href="index.html">HOME PAGE</a></li>
-      <li><a href="employees.html">👷 العاملين</a></li>
-      <li><a href="custody.html">💸 المصروفات والعهدة</a></li>
-      <li><a href="#">📦 الطلبات</a></li>
-    </ul>
-  </nav>
-</header>
-
-  <h2>بيانات العاملين</h2>
-  <div class="summary-section">
-  <h3>👷‍♂️ عدد العمال حسب المهنة</h3>
-  <div class="scroll-row" id="jobSummary"></div>
-  <h3>👨‍🔧 عدد العمال حسب الريس</h3>
-  <div class="scroll-row" id="bossSummary"></div>
-  <h3>🏢 عدد العمال حسب الشركة</h3>
-<div class="scroll-row" id="companySummary"></div>
-</div>
-  <div class="top-controls">
-  <div class="filter-buttons">
-  <button id="showAll" class="active">عرض الكل</button>
-  <button id="showWarnings">قرب ينتهي تصريحه</button>
-  <button id="filterMohandes">المهندس فقط</button>
-  <button id="filterMagd">المجد فقط</button>
-</div>
-<div class="export-buttons" style="margin: 10px 0;">
-  <button id="exportMohandes">📤 تصدير المهندس Excel</button>
-  <button id="exportMagd">📤 تصدير المجد Excel</button>
-</div>
-
-
-    <button id="openPopup">➕ إضافة عامل جديد</button>
-  </div>
-  <div id="counters" class="summary-boxes"></div>
-  <!-- Modal لاختيار وتجديد العمال -->
-<!-- Modal لاختيار وتجديد العمال -->
-<div class="popup-overlay" id="renewPopup" style="display: none;">
-  <div class="popup neon-popup">
-    <button class="close-btn" id="closeRenew">×</button>
-    <h3 class="popup-title">اختار العمال للتجديد</h3>
-    <form id="renewForm">
-      <div id="renewList" class="renew-list scrollable-list"></div>
-      <div class="renew-submit">
-        <button type="submit" class="confirm-btn">✅ تأكيد التجديد</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-  <h3>العاملين الحاليين</h3>
-  <!-- مودال الإضافة -->
-<div class="popup-overlay" id="popupForm" style="display: none;">
-  <div class="popup">
-    <button class="close-btn" id="closePopup">×</button>
-    
-    <h3>إضافة عامل جديد</h3>
-    <form id="employeeForm">
-      <label>اسم العامل:</label>
-      <input type="text" name="name" required />
-      <label>المهنة:</label>
-      <input type="text" name="job" required />
-      <label>اسم الريس المسؤول:</label>
-      <input type="text" name="boss" required />
-      <label>الشركة:</label>
-      <select name="company" required>
-        <option value="المهندس">المهندس</option>
-        <option value="المجد">المجد</option>
-      </select>
-      <label>تاريخ بداية التصريح:</label>
-      <input type="date" name="startDate" required />
-      <label>تاريخ نهاية التصريح:</label>
-      <input type="date" name="endDate" required />
-      <label>تاريخ إلغاء التصريح (اختياري):</label>
-      <input type="date" name="cancelDate" />
-      <button type="submit">تسجيل العامل</button>
-    </form>
-  </div>
-</div>
-
-  <div class="renew-buttons">
-  <strong>تجديد تلقائي لـ:</strong>
-  <button class="renew-btn" data-days="5">5 أيام</button>
-<button class="renew-btn" data-days="14">أسبوعين</button>
-</div>
-  <table>
-    <thead>
-      <tr>
-        <th>الاسم</th>
-        <th>المهنة</th>
-        <th>الريس</th>
-        <th>الشركة</th>
-        <th>بداية التصريح</th>
-        <th>نهاية التصريح</th>
-        <th>عدد الأيام</th>
-        <th>تعديل</th>
-        <th>حذف</th>
-      </tr>
-    </thead>
-    <tbody id="activeEmployees"></tbody>
-  </table>
-  <h3>العاملين المنتهية تصاريحهم أو مغادرين</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>الاسم</th>
-        <th>المهنة</th>
-        <th>الريس</th>
-        <th>الشركة</th>
-        <th>بداية التصريح</th>
-        <th>نهاية التصريح</th>
-        <th>تاريخ الإلغاء</th>
-      </tr>
-    </thead>
-    <tbody id="inactiveEmployees"></tbody>
-  </table>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
-</body>
-</html>

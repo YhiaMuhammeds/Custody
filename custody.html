@@ -11,6 +11,7 @@
   <header class="main-header">
   <nav>
     <ul>
+      <li><a href="index.html">HOME PAGE</a></li>
       <li><a href="employees.html">👷 العاملين</a></li>
       <li><a href="custody.html">💸 المصروفات والعهدة</a></li>
       <li><a href="#">📦 الطلبات</a></li>
@@ -21,12 +22,22 @@
 
   <section class="search-box">
     <label>فلترة حسب التاريخ:</label>
+    <input type="text" id="searchItem" placeholder="اكتب اسم المصروف..." />
     <div style="display:flex; gap:10px">
       <input type="date" id="filterFrom">
       <input type="date" id="filterTo">
       <button id="applyFilter">تطبيق الفلتر</button>
     </div>
   </section>
+<div class="filter-container">
+  <label for="filterDate">تصفية بالتاريخ:</label>
+  <input type="date" id="filterDate">
+
+</div>
+<select id="monthFilter">
+  <option value="all">كل الشهور</option>
+</select>
+
 
   <section class="custody-section">
     <h3>إضافة عهدة جديدة</h3>
@@ -43,6 +54,7 @@
       <button type="submit">تسجيل العهدة</button>
     </form>
   </section>
+
 
   <section class="expense-section">
     <h3>إضافة مصروف</h3>
@@ -62,13 +74,14 @@
       <button type="submit">إضافة المصروف</button>
     </form>
   </section>
+  
 
   <section class="report-section">
     <h3>التقرير المالي</h3>
     <p><strong>إجمالي العهد:</strong> <span id="totalCustodies">0</span> جنيه</p>
     <p><strong>إجمالي المصروفات:</strong> <span id="totalExpenses">0</span> جنيه</p>
     <p><strong>المتبقي:</strong> <span id="remaining">0</span> جنيه</p>
-    <button onclick="exportToExcel()">📤 تصدير الجدول</button>
+    <button id="exportExcel" class="export-btn">تصدير إلى Excel</button>
   </section>
 
   <table>
@@ -83,5 +96,6 @@
     </thead>
     <tbody id="expensesTable"></tbody>
   </table>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>

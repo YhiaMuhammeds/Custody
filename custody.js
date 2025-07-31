@@ -13,36 +13,127 @@ const remainingSpan = document.getElementById('remaining');
 const filterFrom = document.getElementById('filterFrom');
 const filterTo = document.getElementById('filterTo');
 const applyFilter = document.getElementById('applyFilter');
+const monthFilter = document.getElementById('monthFilter');
+const filterDate = document.getElementById('filterDate');
+const searchInput = document.getElementById('searchItem');
 
-// Firestore Collections
+// Firebase Collections
 const custodyCol = collection(db, 'custodies');
 const expensesCol = collection(db, 'expenses');
 
-// Cached Data
+// Cached Lists
 let custodyList = [];
 let expenseList = [];
 
-// Functions
+// Add Custody
+custodyForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('custodyName').value;
+  const amount = +document.getElementById('custodyAmount').value;
+  const date = document.getElementById('custodyDate').value || new Date().toISOString().split('T')[0];
+
+  try {
+    await addDoc(custodyCol, { name, total_amount: amount, date });
+    custodyForm.reset();
+    console.log("✅ تم إضافة العهدة");
+  } catch (err) {
+    console.error("❌ خطأ أثناء الإضافة:", err);
+  }
+});
+
+// Add Expense
+expenseForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const item = document.getElementById('item').value;
+  const amount = +document.getElementById('expenseAmount').value;
+  const date = document.getElementById('expenseDate').value || new Date().toISOString().split('T')[0];
+  const note = document.getElementById('note').value;
+
+  try {
+    await addDoc(expensesCol, { item, amount, date, note });
+    expenseForm.reset();
+    console.log("✅ تم إضافة المصروف");
+  } catch (err) {
+    console.error("❌ خطأ أثناء الإضافة:", err);
+  }
+});
+
+// Snapshot listeners
+onSnapshot(custodyCol, (snapshot) => {
+  custodyList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  calculateAndRender();
+});
+
+onSnapshot(expensesCol, (snapshot) => {
+  expenseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  populateMonthFilter();
+  calculateAndRender();
+});
+
+// Filtering
+applyFilter.addEventListener('click', calculateAndRender);
+monthFilter.addEventListener('change', calculateAndRender);
+filterDate.addEventListener('change', calculateAndRender);
+
+// Search
+searchInput.addEventListener('input', function (e) {
+  const keyword = e.target.value.toLowerCase();
+  const filtered = expenseList.filter(exp =>
+    exp.item && exp.item.toLowerCase().includes(keyword)
+  );
+  renderFilteredExpenses(filtered);
+});
+
+// Excel Export
+window.exportToExcel = function () {
+  const table = document.querySelector("table");
+  const wb = XLSX.utils.table_to_book(table, { sheet: "التقرير" });
+  XLSX.writeFile(wb, "custody_report.xlsx");
+};
+
+// Helpers
+function extractMonth(dateStr) {
+  return dateStr.slice(0, 7);
+}
+
+function populateMonthFilter() {
+  const months = new Set(expenseList.map(e => extractMonth(e.date)));
+  monthFilter.innerHTML = `<option value="all">كل الشهور</option>`;
+  Array.from(months).sort().forEach(month => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.textContent = month;
+    monthFilter.appendChild(option);
+  });
+}
+
 function calculateAndRender() {
-  // الحسابات العامة
   const totalCustody = custodyList.reduce((acc, c) => acc + (c.total_amount || 0), 0);
+
+  let filteredExpenses = [...expenseList];
+
   const from = filterFrom.value;
   const to = filterTo.value;
+  const selectedMonth = monthFilter.value;
+  const selectedDate = filterDate.value;
 
-  // تصفية المصروفات
-  const filteredExpenses = expenseList.filter(e =>
-    (!from || e.date >= from) && (!to || e.date <= to)
-  );
+  if (from) filteredExpenses = filteredExpenses.filter(e => e.date >= from);
+  if (to) filteredExpenses = filteredExpenses.filter(e => e.date <= to);
+  if (selectedMonth !== 'all') filteredExpenses = filteredExpenses.filter(e => extractMonth(e.date) === selectedMonth);
+  if (selectedDate) filteredExpenses = filteredExpenses.filter(e => e.date === selectedDate);
 
   const totalExpenses = filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
 
-  // تحديث DOM
   totalCustodiesSpan.textContent = totalCustody;
   totalSpan.textContent = totalExpenses;
   remainingSpan.textContent = totalCustody - totalExpenses;
 
+  renderFilteredExpenses(filteredExpenses);
+}
+
+function renderFilteredExpenses(expenses) {
   expensesTable.innerHTML = '';
-  filteredExpenses.forEach(e => {
+  expenses.forEach(e => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${e.date}</td>
@@ -58,44 +149,3 @@ function calculateAndRender() {
     };
   });
 }
-
-// Submissions
-custodyForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('custodyName').value;
-  const amount = +document.getElementById('custodyAmount').value;
-  const date = document.getElementById('custodyDate').value || new Date().toISOString().split('T')[0];
-  await addDoc(custodyCol, { name, total_amount: amount, date });
-  custodyForm.reset();
-});
-
-expenseForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const item = document.getElementById('item').value;
-  const amount = +document.getElementById('expenseAmount').value;
-  const date = document.getElementById('expenseDate').value || new Date().toISOString().split('T')[0];
-  const note = document.getElementById('note').value;
-  await addDoc(expensesCol, { item, amount, date, note });
-  expenseForm.reset();
-});
-
-// فلترة
-applyFilter.addEventListener('click', calculateAndRender);
-
-// تصدير
-window.exportToExcel = function () {
-  const table = document.querySelector("table");
-  const wb = XLSX.utils.table_to_book(table, { sheet: "التقرير" });
-  XLSX.writeFile(wb, "custody_report.xlsx");
-};
-
-// المزامنة الحيّة مع الكاش
-onSnapshot(custodyCol, snapshot => {
-  custodyList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  calculateAndRender();
-});
-
-onSnapshot(expensesCol, snapshot => {
-  expenseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  calculateAndRender();
-});
