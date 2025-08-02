@@ -143,6 +143,7 @@ function renderFilteredExpenses(expenses) {
       <td><span class="delete-btn" data-id="${e.id}">🗑️</span></td>
     `;
     expensesTable.appendChild(row);
+document.getElementById('exportExcel').addEventListener('click', exportToExcel);
 
     row.querySelector('.delete-btn').onclick = async () => {
       await deleteDoc(doc(db, 'expenses', e.id));
