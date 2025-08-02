@@ -1,6 +1,7 @@
+// ✅ تم التعديل حسب طلبك
 import { db } from './firebase-config.js';
 import {
-  collection, addDoc, deleteDoc, doc, onSnapshot
+  collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // DOM Elements
@@ -16,6 +17,7 @@ const applyFilter = document.getElementById('applyFilter');
 const monthFilter = document.getElementById('monthFilter');
 const filterDate = document.getElementById('filterDate');
 const searchInput = document.getElementById('searchItem');
+const clearCustodyBtn = document.getElementById('clearCustodyBtn');
 
 // Firebase Collections
 const custodyCol = collection(db, 'custodies');
@@ -30,7 +32,7 @@ custodyForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('custodyName').value;
   const amount = +document.getElementById('custodyAmount').value;
-  const date = document.getElementById('custodyDate').value || new Date().toISOString().split('T')[0];
+  const date = document.getElementById('custodyDate').value || new Date().toISOString();
 
   try {
     await addDoc(custodyCol, { name, total_amount: amount, date });
@@ -60,12 +62,12 @@ expenseForm.addEventListener('submit', async (e) => {
 
 // Snapshot listeners
 onSnapshot(custodyCol, (snapshot) => {
-  custodyList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  custodyList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'custody' }));
   calculateAndRender();
 });
 
 onSnapshot(expensesCol, (snapshot) => {
-  expenseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  expenseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'expense' }));
   populateMonthFilter();
   calculateAndRender();
 });
@@ -91,6 +93,16 @@ window.exportToExcel = function () {
   XLSX.writeFile(wb, "custody_report.xlsx");
 };
 
+document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+
+// Clear all custody
+clearCustodyBtn?.addEventListener('click', async () => {
+  if (!confirm('هل أنت متأكد من حذف كل العهد؟')) return;
+  for (const c of custodyList) {
+    await deleteDoc(doc(db, 'custodies', c.id));
+  }
+});
+
 // Helpers
 function extractMonth(dateStr) {
   return dateStr.slice(0, 7);
@@ -110,43 +122,74 @@ function populateMonthFilter() {
 function calculateAndRender() {
   const totalCustody = custodyList.reduce((acc, c) => acc + (c.total_amount || 0), 0);
 
-  let filteredExpenses = [...expenseList];
+   let combinedList = [...expenseList, ...custodyList.map(c => ({
+    id: c.id,
+    item: c.name,
+    amount: c.total_amount,
+    date: c.date,
+    note: 'عهدة',
+    type: 'custody'
+  }))];
+
+  // ✅ الترتيب من الأحدث إلى الأقدم
+  combinedList.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const from = filterFrom.value;
   const to = filterTo.value;
   const selectedMonth = monthFilter.value;
   const selectedDate = filterDate.value;
 
-  if (from) filteredExpenses = filteredExpenses.filter(e => e.date >= from);
-  if (to) filteredExpenses = filteredExpenses.filter(e => e.date <= to);
-  if (selectedMonth !== 'all') filteredExpenses = filteredExpenses.filter(e => extractMonth(e.date) === selectedMonth);
-  if (selectedDate) filteredExpenses = filteredExpenses.filter(e => e.date === selectedDate);
+  if (from) combinedList = combinedList.filter(e => e.date >= from);
+  if (to) combinedList = combinedList.filter(e => e.date <= to);
+  if (selectedMonth !== 'all') combinedList = combinedList.filter(e => extractMonth(e.date) === selectedMonth);
+  if (selectedDate) combinedList = combinedList.filter(e => e.date === selectedDate);
 
-  const totalExpenses = filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
+  const totalExpenses = combinedList
+    .filter(e => e.type !== 'custody')
+    .reduce((acc, e) => acc + (e.amount || 0), 0);
 
   totalCustodiesSpan.textContent = totalCustody;
   totalSpan.textContent = totalExpenses;
   remainingSpan.textContent = totalCustody - totalExpenses;
 
-  renderFilteredExpenses(filteredExpenses);
+  renderFilteredExpenses(combinedList);
 }
 
-function renderFilteredExpenses(expenses) {
+function renderFilteredExpenses(items) {
   expensesTable.innerHTML = '';
-  expenses.forEach(e => {
+  items.forEach(e => {
     const row = document.createElement('tr');
+    row.style.backgroundColor = e.type === 'custody' ? '#e0f7fa' : 'white';
     row.innerHTML = `
       <td>${e.date}</td>
       <td>${e.item}</td>
       <td>${e.amount}</td>
       <td>${e.note || ''}</td>
-      <td><span class="delete-btn" data-id="${e.id}">🗑️</span></td>
+      <td>
+        <span class="delete-btn" data-id="${e.id}" data-type="${e.type}">🗑️</span>
+        <span class="edit-btn" data-id="${e.id}" data-type="${e.type}">✏️</span>
+      </td>
     `;
     expensesTable.appendChild(row);
-document.getElementById('exportExcel').addEventListener('click', exportToExcel);
 
     row.querySelector('.delete-btn').onclick = async () => {
-      await deleteDoc(doc(db, 'expenses', e.id));
+      const col = e.type === 'custody' ? 'custodies' : 'expenses';
+      await deleteDoc(doc(db, col, e.id));
+    };
+
+    row.querySelector('.edit-btn').onclick = async () => {
+      const newItem = prompt('اسم المصروف/العهدة:', e.item);
+      const newAmount = +prompt('القيمة:', e.amount);
+      const newNote = prompt('ملاحظة:', e.note || '');
+
+      if (newItem && newAmount) {
+        const col = e.type === 'custody' ? 'custodies' : 'expenses';
+        const updateData = e.type === 'custody' ?
+          { name: newItem, total_amount: newAmount, date: e.date } :
+          { item: newItem, amount: newAmount, note: newNote, date: e.date };
+
+        await updateDoc(doc(db, col, e.id), updateData);
+      }
     };
   });
 }
