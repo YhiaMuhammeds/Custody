@@ -9,15 +9,15 @@
 </head>
 <body>
   <header class="main-header">
-  <nav>
-    <ul>
-      <li><a href="index.html">HOME PAGE</a></li>
-      <li><a href="employees.html">👷 العاملين</a></li>
-      <li><a href="custody.html">💸 المصروفات والعهدة</a></li>
-      <li><a href="#">📦 الطلبات</a></li>
-    </ul>
-  </nav>
-</header>
+    <nav>
+      <ul>
+        <li><a href="index.html">HOME PAGE</a></li>
+        <li><a href="employees.html">👷 العاملين</a></li>
+        <li><a href="custody.html">💸 المصروفات والعهدة</a></li>
+        <li><a href="#">📦 الطلبات</a></li>
+      </ul>
+    </nav>
+  </header>
   <h2>تسجيل العهدة والمصروفات</h2>
 
   <section class="search-box">
@@ -29,15 +29,15 @@
       <button id="applyFilter">تطبيق الفلتر</button>
     </div>
   </section>
-<div class="filter-container">
-  <label for="filterDate">تصفية بالتاريخ:</label>
-  <input type="date" id="filterDate">
 
-</div>
-<select id="monthFilter">
-  <option value="all">كل الشهور</option>
-</select>
+  <div class="filter-container">
+    <label for="filterDate">تصفية بالتاريخ:</label>
+    <input type="date" id="filterDate">
+  </div>
 
+  <select id="monthFilter">
+    <option value="all">كل الشهور</option>
+  </select>
 
   <section class="custody-section">
     <h3>إضافة عهدة جديدة</h3>
@@ -54,7 +54,6 @@
       <button type="submit">تسجيل العهدة</button>
     </form>
   </section>
-
 
   <section class="expense-section">
     <h3>إضافة مصروف</h3>
@@ -74,7 +73,6 @@
       <button type="submit">إضافة المصروف</button>
     </form>
   </section>
-  
 
   <section class="report-section">
     <h3>التقرير المالي</h3>
@@ -82,6 +80,8 @@
     <p><strong>إجمالي المصروفات:</strong> <span id="totalExpenses">0</span> جنيه</p>
     <p><strong>المتبقي:</strong> <span id="remaining">0</span> جنيه</p>
     <button id="exportExcel" class="export-btn">تصدير إلى Excel</button>
+    <button id="clearCustodyBtn">🗑️ مسح كل العهد</button>
+
   </section>
 
   <table>
@@ -97,5 +97,12 @@
     <tbody id="expensesTable"></tbody>
   </table>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+  tr.custody-row td {
+    background-color: #ffe5e5 !important; /* لون أحمر فاتح */
+    font-weight: bold;
+  }
+</style>
+
 </body>
 </html>
